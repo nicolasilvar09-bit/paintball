@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0b1219"><meta name="description" content="Paintball 3D no Jardim Balneário e no Centro de Angra dos Reis.">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-180.png">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Paintball">
@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500;700&display=swap">
 <style>
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}
+canvas{touch-action:none}
 :root{
   color-scheme:dark;
   --ink:#fbf7ef; --dim:rgba(251,247,239,.7);
@@ -489,6 +491,10 @@ body.spect .cross,body.spect .ammo,body.spect .dmgring,body.spect .holo{display:
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
+// sem zoom por toque duplo / pinça (iPhone)
+{let lastT=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastT<350&&!(e.target.closest&&e.target.closest('input,textarea,select')))e.preventDefault();lastT=n;},{passive:false});
+ ['gesturestart','gesturechange','gestureend','dblclick'].forEach(k=>document.addEventListener(k,e=>e.preventDefault(),{passive:false}));
+ document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});}
 const $=s=>document.querySelector(s);let FRAMED=false;try{FRAMED=window.self!==window.top;}catch(e){FRAMED=true;}
 function syncHdr(){const pr=document.createElement('div');pr.style.cssText='position:fixed;left:0;top:0;width:1px;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none';document.body.appendChild(pr);const sat=pr.offsetHeight;pr.remove();
   const on=matchMedia('(pointer:coarse)').matches&&sat>40&&!(document.fullscreenElement||document.webkitFullscreenElement);const r=document.documentElement;r.classList.toggle('hdr',on);
