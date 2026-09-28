@@ -324,6 +324,13 @@ body.spect .cross,body.spect .ammo,body.spect .dmgring,body.spect .holo{display:
 .roomc span{display:block;font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--lime)} .roomc b{font:800 34px var(--display);letter-spacing:.12em}
 .roomc .btn.small{margin:0;width:auto}
 .netpl{display:grid;gap:6px;margin:6px 0 12px}
+.rkl{display:grid;gap:5px;margin:0 0 14px;max-height:340px;overflow:auto}
+.rkh{display:grid;grid-template-columns:30px 1fr auto;gap:10px;padding:0 12px;font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.rkr{display:grid;grid-template-columns:30px 1fr auto auto;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(251,247,239,.06);border:1px solid var(--line)}
+.rkr.me{background:rgba(214,242,92,.12);border-color:rgba(214,242,92,.45)} .rkr.me .rkn{color:var(--ink)}
+.rkp{font:800 15px var(--display);color:var(--dim)} .rkr:nth-child(2) .rkp{color:#f5c542} .rkr:nth-child(3) .rkp{color:#cfd6dd} .rkr:nth-child(4) .rkp{color:#d08a4e}
+.rkn{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .rkn small{display:block;font:500 11px var(--mono);color:var(--dim)}
+.rkr b{font:800 18px var(--display)} .rkx{all:unset;cursor:pointer;width:26px;height:26px;border-radius:8px;text-align:center;line-height:26px;color:var(--dim);font-size:18px} .rkx:hover{background:rgba(255,80,60,.2);color:#fff}
 .nbots{margin:0 0 14px;padding:10px 12px;border-radius:14px;background:rgba(251,247,239,.04);border:1px solid var(--line)}
 .nbrow{display:flex;align-items:center;gap:10px;margin-top:8px} .nbrow .nbn{flex:1;font-size:13px;font-weight:700}
 .nbrow button{all:unset;cursor:pointer;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(251,247,239,.1);font:800 18px var(--display)}
@@ -384,7 +391,8 @@ body.spect .cross,body.spect .ammo,body.spect .dmgring,body.spect .holo{display:
     <div class="brand"><div class="eyebrow" id="brandEy">Jardim Balneário · Angra dos Reis</div><h1>Paintball do <span class="a">Balne</span><span class="o">ário</span></h1></div>
     <nav class="nav" id="nav" aria-label="Menu principal">
       <button type="button" data-p="play" class="on">Jogar<small>Partida contra bots</small></button>
-      <button type="button" data-p="online">Jogar com amigos<small>Salas online</small><em>novo</em></button>
+      <button type="button" data-p="online">Jogar com amigos<small>Salas online</small></button>
+      <button type="button" data-p="rank">Placar<small>Ranking e amigos</small><em>novo</em></button>
       <button type="button" data-p="arsenal">Arsenal<small>Armas e equipamentos</small></button>
       <button type="button" data-p="profile">Perfil<small id="navLvl">Nível 1</small></button>
       <button type="button" data-p="settings">Configurações<small>Mira, som e gráficos</small></button>
@@ -457,6 +465,17 @@ body.spect .cross,body.spect .ammo,body.spect .dmgring,body.spect .holo{display:
       </div>
       <label>Acabamento</label><div class="sws" id="fins"></div>
       <p class="sum" id="unlockInfo"></p>
+    </div>
+
+    <div class="pn" data-panel="rank" hidden>
+      <div class="eyebrow">Ranking</div><h2>Placar</h2>
+      <div class="roomc"><div><span>Seu código de amigo</span><b id="rkCode">-----</b></div><button class="btn small" type="button" id="rkShare">Mandar no WhatsApp</button></div>
+      <div class="seg" id="rkTab" style="margin-bottom:10px"><button type="button" data-t="all">Geral</button><button type="button" data-t="wk">Semana</button><button type="button" data-t="fr">Amigos</button></div>
+      <div class="rkl" id="rkList"></div>
+      <label for="rkIn">Adicionar amigo pelo código</label>
+      <div class="code" style="margin-top:6px"><input type="text" id="rkIn" maxlength="5" placeholder="CÓDIGO" autocomplete="off"><button class="btn small" type="button" id="rkAdd">Adicionar</button></div>
+      <p class="sum" id="rkMsg"></p>
+      <p class="sum">Seu progresso fica neste aparelho. Suas vitórias e marcações entram no placar ao fim de cada partida.</p>
     </div>
 
     <div class="pn" data-panel="profile" hidden>
@@ -2347,7 +2366,7 @@ let mhT=0;function updateHUD(dt){mhT-=dt;if(mhT<=0){mhT=.2;updateModeHud();}if(i
   updDmg(dt);drawMap();if(!$('#bigmap').hidden)drawBig();}
 
 /* ================= FLOW ================= */
-function start(){if(isTouch&&SV.set.fullscr)goFullscreen();document.body.classList.add('playing');clearInput();T.stickId=null;T.mx=T.mz=0;applyLoadout();G.lv0=lvlNow();toggleBig(false);T.crouch=false;T.ads=false;adsT=false;rmb=false;$('#adsB').classList.remove('on');player.ads=0;player.bloom=0;$('#crB').classList.remove('on');DMG.forEach(d=>d.el.remove());DMG.length=0;initAudio();if(AC&&AC.state==='suspended')AC.resume();myName=(SV.name||'').trim().slice(0,14);
+function start(){RK.t0=performance.now();if(isTouch&&SV.set.fullscr)goFullscreen();document.body.classList.add('playing');clearInput();T.stickId=null;T.mx=T.mz=0;applyLoadout();G.lv0=lvlNow();toggleBig(false);T.crouch=false;T.ads=false;adsT=false;rmb=false;$('#adsB').classList.remove('on');player.ads=0;player.bloom=0;$('#crB').classList.remove('on');DMG.forEach(d=>d.el.remove());DMG.length=0;initAudio();if(AC&&AC.state==='suspended')AC.resume();myName=(SV.name||'').trim().slice(0,14);
   player.name=myName||'Você';$('#myName').textContent=player.name;TARGET=TARGETS[SV.cfg.mode][SV.cfg.target];
   if(NET.on&&NET.spec&&NET.state==='play')buildRosterNet(NET.spec);else buildRoster();syncHopperColor(player.team);applyMarker();
   G.m={marks:0,deaths:0,shots:0,caps:0,best:0,spots:[]};G.newAch=[];G.mode='play';G.time=SV.cfg.dur*60;G.sA=0;G.sO=0;player.streak=0;ents.forEach(e=>{e.marks=0;e.deaths=0;e.out=false;respawn(e);});player.inv=0;EL.round=1;EL.rt=0;EL.inter=0;EL.endIn=0;
@@ -2361,7 +2380,7 @@ function endGame(){if(NET.on&&NET.state==='play'){if(!NET.host&&!NET.ending)retu
   if(isTeam()){w=G.sA===G.sO?'Empate!':(G.sA>G.sO?TN('A'):TN('O'))+' venceu!';w+='  '+G.sA+' × '+G.sO;won=G.sA>G.sO;col=G.sA>G.sO?lightHex(TEAMCOL.A):G.sA<G.sO?lightHex(TEAMCOL.O):'';}
   else{const top=sorted[0];won=top.isPlayer;w=(top.isPlayer?'Você venceu!':top.name+' venceu!')+'  '+top.marks+' marcações';col=colCss(top.team);}
   $('#winT').textContent=w;$('#winT').style.color=col;
-  const xp0=xpOf(SV.st);SV.st.matches++;if(won)SV.st.wins++;if(won&&G.m.deaths===0&&G.m.marks>=3)SV.st.flawless++;if(won&&SV.cfg.map==='full')SV.st.fullWins++;checkAch(false);save();
+  const xp0=xpOf(SV.st);SV.st.matches++;if(won)SV.st.wins++;if(won&&G.m.deaths===0&&G.m.marks>=3)SV.st.flawless++;if(won&&SV.cfg.map==='full')SV.st.fullWins++;checkAch(false);save();rkMatchEnd(player.marks,won);
   G.card={won,draw:isTeam()&&G.sA===G.sO,rank:sorted.indexOf(player)+1,total:sorted.length,top:sorted[0]};makeCard();const gain=xpOf(SV.st)-xp0+player.marks*10;const lv1=lvlNow();const un=unlocksBetween(G.lv0||1,lv1);
   $('#xpGain').textContent='+'+gain+' XP · '+levelOf(SV.st).label+(lv1>(G.lv0||1)?' · subiu de nível!':'')+(un.length?' Liberado no Arsenal: '+un.join(', ')+'.':'');
   $('#board').innerHTML=sorted.map(e=>`<tr class="${e.isPlayer?'me':''}"><td style="color:${new THREE.Color(TEAMCOL[e.team]).lerp(new THREE.Color(0xffffff),.35).getStyle()}">${esc(e.isPlayer?player.name:e.name)}</td><td class="n">${e.marks}</td><td class="n">${e.deaths}</td></tr>`).join('');
@@ -2631,6 +2650,43 @@ function updateNet(e,dt){const m=e.mesh;if(!e.netT){if(m)m.visible=false;return;
  addEventListener('pagehide',()=>{if(NET.tx)NET.tx.send('bye',{i:NET.id});});}
 function confirmNoPeers(){$('#netInfo').textContent='Ninguém entrou ainda. Mande o convite e espere a galera aparecer na lista (ou toque de novo em Começar para jogar só com bots).';if(NET.warned){NET.warned=false;return true;}NET.warned=true;return false;}
 function netAutoJoin(){const q=(Q.get('sala')||SV.pendingRoom||'').toUpperCase();if(!q)return;if(SV.pendingRoom){SV.pendingRoom='';save();}showPanel('online');$('#roomIn').value=q;netJoin(q,false);}
+/* ================= PLACAR E AMIGOS (Supabase, conta automática sem login) ================= */
+const RK={me:null,ready:false,busy:null,tab:'all',rows:[],t0:0};
+const RK_BAD=['porra','caralh','buceta','puta','merda','fdp','viad','piroc','arromb','corno','vtnc','foder','fuder','cacete','bosta','xota','xoxot','cuzao','cuzão','boquete','punheta','siririca','vagabund','desgra','nazi','hitler'];
+function rkName(n){n=String(n||'').trim();const s=n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z]/g,'');return (!n||RK_BAD.some(b=>s.includes(b.normalize('NFD').replace(/[̀-ͯ]/g,''))))?'Jogador':n;}
+function rkWeek(){const d=new Date(Date.now()-3*3600e3);const t=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));const dn=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dn+3);
+  const y=t.getUTCFullYear();const f=new Date(Date.UTC(y,0,4));const w=1+Math.round(((t-f)/864e5-3+((f.getUTCDay()+6)%7))/7);return y+'-'+String(w).padStart(2,'0');}
+async function rkClient(){const sb=await loadSupa();if(!NET.client)NET.client=sb.createClient(SUPA.url,SUPA.key,{realtime:{params:{eventsPerSecond:40}}});return NET.client;}
+function rkBoot(){if(RK.busy)return RK.busy;RK.busy=(async()=>{const c=await rkClient();let {data:{session}}=await c.auth.getSession();
+    if(!session){const r=await c.auth.signInAnonymously();if(r.error)throw r.error;}
+    const {data,error}=await c.rpc('pb_join',{p_name:rkName(SV.name)||'Jogador'});if(error)throw error;RK.me=data;RK.ready=true;rkSyncMe();return data;})();
+  RK.busy.catch(e=>{console.warn('placar',e);RK.busy=null;$('#rkMsg')&&($('#rkMsg').textContent='Sem conexão com o placar agora. Tente de novo mais tarde.');});return RK.busy;}
+function rkSyncMe(){if(!RK.me)return;$('#rkCode').textContent=RK.me.code;}
+let rkNameT=0;function rkNameChanged(){clearTimeout(rkNameT);rkNameT=setTimeout(()=>{if(RK.ready)rkClient().then(c=>c.rpc('pb_join',{p_name:rkName(SV.name)||'Jogador'})).then(r=>{if(r&&r.data)RK.me=r.data;}).catch(()=>{});},1500);}
+function rkMatchEnd(marks,won){if(!RK.t0)return;const secs=Math.round((performance.now()-RK.t0)/1000);RK.t0=0;const lv=lvlNow();
+  rkBoot().then(()=>rkClient()).then(c=>c.rpc('pb_match',{p_marks:marks|0,p_won:!!won,p_secs:secs,p_lv:lv})).then(r=>{if(r&&r.data)RK.me=r.data;}).catch(()=>{});}
+async function rkLoad(){const L=$('#rkList');L.innerHTML='<p class="sum">Carregando…</p>';$('#rkMsg').textContent='';
+  try{await rkBoot();const c=await rkClient();let rows,val,lab;
+    if(RK.tab==='fr'){const r=await c.rpc('pb_friends_list');if(r.error)throw r.error;rows=r.data||[];rows.sort((a,b)=>b.wins-a.wins||b.marks-a.marks);val=p=>p.wins;lab='vitórias';}
+    else if(RK.tab==='wk'){const r=await c.from('pb_players').select('id,name,code,lv,wk_wins,wk_marks').eq('wk',rkWeek()).order('wk_marks',{ascending:false}).limit(50);if(r.error)throw r.error;rows=r.data||[];val=p=>p.wk_marks;lab='marcações';}
+    else{const r=await c.from('pb_players').select('id,name,code,lv,wins,marks').gt('matches',0).order('wins',{ascending:false}).order('marks',{ascending:false}).limit(50);if(r.error)throw r.error;rows=r.data||[];val=p=>p.wins;lab='vitórias';}
+    RK.rows=rows;const me=RK.me&&RK.me.id;
+    if(!rows.length){L.innerHTML='<p class="sum">'+(RK.tab==='fr'?'Você ainda não adicionou amigos. Mande seu código para a galera ou digite o código de alguém abaixo.':RK.tab==='wk'?'Ninguém jogou esta semana ainda. Seja o primeiro!':'Ninguém no placar ainda. Jogue uma partida para entrar!')+'</p>';return;}
+    L.innerHTML='<div class="rkh"><span>#</span><span>Jogador</span><span>'+lab+'</span></div>'+rows.map((p,i)=>`<div class="rkr${p.id===me?' me':''}"><span class="rkp">${i+1}</span><span class="rkn">${esc(rkName(p.name))}<small>Nível ${p.lv}${RK.tab==='fr'&&p.id!==me?' · '+p.code:''}</small></span><b>${val(p)}</b>${RK.tab==='fr'&&p.id!==me?`<button type="button" class="rkx" data-id="${p.id}" aria-label="Remover amigo">×</button>`:''}</div>`).join('');
+    L.querySelectorAll('.rkx').forEach(b=>b.onclick=async()=>{if(!confirm('Remover este amigo?'))return;await c.rpc('pb_remove_friend',{p_id:b.dataset.id});rkLoad();});
+  }catch(e){L.innerHTML='<p class="sum">Não deu para carregar o placar agora. Confira a internet e tente de novo.</p>';}}
+async function rkAdd(code){code=String(code||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');const M=$('#rkMsg');if(code.length!==5){M.textContent='O código tem 5 letras/números.';return;}
+  M.textContent='Adicionando…';try{await rkBoot();const c=await rkClient();const r=await c.rpc('pb_add_friend',{p_code:code});if(r.error)throw r.error;
+    M.textContent=rkName(r.data.name)+' agora é seu amigo!';$('#rkIn').value='';RK.tab='fr';rkTabs();rkLoad();}
+  catch(e){M.textContent=(e&&e.message&&/encontrado|seu código|Limite/.test(e.message))?e.message+'.':'Não deu para adicionar agora. Tente de novo.';}}
+function rkTabs(){document.querySelectorAll('#rkTab button').forEach(b=>b.classList.toggle('on',b.dataset.t===RK.tab));}
+{document.querySelectorAll('#rkTab button').forEach(b=>b.onclick=()=>{RK.tab=b.dataset.t;rkTabs();rkLoad();});
+ $('#rkAdd').onclick=()=>rkAdd($('#rkIn').value);$('#rkIn').addEventListener('keydown',e=>{if(e.key==='Enter')rkAdd($('#rkIn').value);});
+ $('#rkShare').onclick=()=>{if(!RK.me)return;const link=(PUBLIC_URL||'https://nicolasilvar09-bit.github.io/paintball/')+'?amigo='+RK.me.code;
+   const txt='Me adiciona no Paintball do Balneário! Meu código de amigo: '+RK.me.code+'\n'+link;
+   if(navigator.share){navigator.share({text:txt}).catch(()=>{});}else{window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');}};
+ const op=showPanel;showPanel=function(k){op(k);if(k==='rank'){rkTabs();rkLoad();}};}
+function rkAuto(){const a=(Q.get('amigo')||'').toUpperCase();if(a){showPanel('rank');rkAdd(a);}else if(navigator.onLine!==false)setTimeout(()=>rkBoot().catch(()=>{}),2500);}
 
 let deferredInstall=null;const isStandalone=matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(!isStandalone){$('#installBox').hidden=false;$('#installB').hidden=false;$('#installTip').textContent='O jogo vai para a tela inicial e abre em tela cheia.';}});
@@ -2655,7 +2711,7 @@ document.querySelectorAll('.seg[data-k]').forEach(sg=>sg.querySelectorAll('butto
 document.querySelectorAll('[data-s]').forEach(inp=>{const k=inp.dataset.s;const ev=inp.type==='checkbox'?'change':'input';
   inp.addEventListener(ev,()=>{SV.set[k]=inp.type==='checkbox'?inp.checked:+inp.value;if(k==='vol'&&MG)MG.gain.value=SV.set.vol/100;if(k==='fov'&&G.mode!=='menu'){camera.fov=SV.set.fov;camera.updateProjectionMatrix();}
     if(k==='fps')$('#fps').hidden=!SV.set.fps;save();syncUI();});});
-$('#nameIn').addEventListener('input',()=>{SV.name=$('#nameIn').value.trim().slice(0,14);save();syncUI();});
+$('#nameIn').addEventListener('input',()=>{SV.name=$('#nameIn').value.trim().slice(0,14);save();syncUI();rkNameChanged();});
 document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{SV.marker=b.dataset.v;save();applyMarker();syncUI();});
 {let armT=0;const rb=$('#resetSt');rb.onclick=()=>{if(!rb.classList.contains('arm')){rb.classList.add('arm');rb.textContent='Clique de novo para confirmar';clearTimeout(armT);armT=setTimeout(()=>{rb.classList.remove('arm');rb.textContent='Zerar estatísticas';},3000);return;}
   SV.st=clone(DEF.st);save();rb.classList.remove('arm');rb.textContent='Estatísticas zeradas';syncUI();};}
@@ -3432,7 +3488,7 @@ function applyTOD(){const P=TOD[SV.cfg.tod]||TOD.dia;SUN.set(...P.sun).normalize
   const night=SV.cfg.tod==='noite';lampPool.visible=night;lampHeadMat.color.setHex(night?0xffe7b0:SV.cfg.tod==='tarde'?0xd9cfb8:0xb9b4a8);CH2.night=night;ents.forEach(e=>{if(e.mesh&&e.mesh.userData.beam)e.mesh.userData.beam.visible=night;});}
 applyTOD();GFX.set(SV.set.q==='ultra');
 buildRoster();drawThumb();syncUI();
-setTimeout(netAutoJoin,400);
+setTimeout(netAutoJoin,400);rkAuto();
 let last=performance.now(),frameN=0;
 function frame(now){
   const DF=DEMO||AERIAL;frameN++;if(!DF||frameN<=400)requestAnimationFrame(frame);
