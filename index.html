@@ -335,7 +335,7 @@ body.spect .cross,body.spect .ammo,body.spect .dmgring,body.spect .holo{display:
 .roomc span{display:block;font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--lime)} .roomc b{font:800 34px var(--display);letter-spacing:.12em}
 .roomc .btn.small{margin:0;width:auto}
 .netpl{display:grid;gap:6px;margin:6px 0 12px}
-.acct{margin:4px 0 14px} .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff!important;color:#1f1f1f!important} .acct .btn.small{width:auto;margin-top:6px}
+.acct{margin:4px 0 14px} .abtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#000!important;color:#fff!important;border:1px solid rgba(255,255,255,.3)!important} .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff!important;color:#1f1f1f!important} .acct .btn.small{width:auto;margin-top:6px}
 .rkl{display:grid;gap:5px;margin:0 0 14px;max-height:340px;overflow:auto}
 .rkh{display:grid;grid-template-columns:30px 1fr auto;gap:10px;padding:0 12px;font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 .rkr{display:grid;grid-template-columns:30px 1fr auto auto;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(251,247,239,.06);border:1px solid var(--line)}
@@ -497,6 +497,7 @@ body.spect .cross,body.spect .ammo,body.spect .dmgring,body.spect .holo{display:
       <label>Conta</label>
       <div class="acct"><p class="sum" id="acctS">Seu progresso está salvo só neste aparelho.</p>
         <button class="btn gbtn" type="button" id="acctG"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.2l7.8 6C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.8c-.5-1.4-.8-3-.8-4.8s.3-3.3.8-4.8l-7.8-6C1 16.5 0 20.1 0 24s1 7.5 2.7 10.8l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.8-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.7l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg>Entrar com Google</button>
+        <button class="btn abtn" type="button" id="acctA" hidden><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#fff" d="M16.37 12.54c-.02-2.05 1.67-3.04 1.75-3.09-.96-1.4-2.44-1.59-2.96-1.61-1.26-.13-2.46.74-3.1.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.64.8-3.35 2.03-1.43 2.48-.37 6.15 1.03 8.16.68.98 1.49 2.09 2.55 2.05 1.02-.04 1.41-.66 2.65-.66 1.23 0 1.58.66 2.66.64 1.1-.02 1.8-1 2.47-1.99.78-1.14 1.1-2.24 1.12-2.3-.02-.01-2.13-.82-2.15-3.27zM14.35 6.52c.56-.68.94-1.63.84-2.57-.81.03-1.79.54-2.37 1.22-.52.6-.98 1.57-.86 2.49.9.07 1.83-.46 2.39-1.14z"/></svg>Entrar com a Apple</button>
         <button class="btn ghost small" type="button" id="acctOut" hidden>Sair da conta</button>
         <p class="sum" id="acctM"></p></div>
       <label for="nameIn">Nome no jogo</label>
@@ -2938,13 +2939,24 @@ function rkTabs(){document.querySelectorAll('#rkTab button').forEach(b=>b.classL
 function rkAuto(){const a=(Q.get('amigo')||'').toUpperCase();if(a){showPanel('rank');rkAdd(a);}accBoot();}
 /* ================= CONTA (Google) + PROGRESSO NA NUVEM ================= */
 const ACC={user:null,syncing:false};
+const IS_APP=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());const APP_ID='com.nicolas.paintballbalneario';
+async function sha256hex(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function accApple(){const M=$('#acctM');M.textContent='Abrindo a Apple…';try{const P=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SignInWithApple;if(!P)throw new Error('sem plugin');
+    const raw=crypto.getRandomValues(new Uint32Array(4)).join('-');const nonce=await sha256hex(raw);
+    const r=await P.authorize({clientId:APP_ID,redirectURI:SUPA.url+'/auth/v1/callback',scopes:'email name',state:'pb',nonce});const tok=r&&r.response&&r.response.identityToken;if(!tok)throw new Error('sem token');
+    await rkBoot().catch(()=>{});const c=await rkClient();const {data:{session}}=await c.auth.getSession();let res=null;
+    if(session&&session.user&&session.user.is_anonymous)res=await c.auth.linkIdentity({provider:'apple',token:tok,nonce:raw});
+    if(!res||res.error)res=await c.auth.signInWithIdToken({provider:'apple',token:tok,nonce:raw});if(res.error)throw res.error;
+    const gn=r.response.givenName;if(gn&&!(SV.name||'').trim()){SV.name=gn.slice(0,14);save();}
+    await accRefresh();if(accReal(ACC.user))M.textContent='Pronto! Seu progresso agora fica salvo na sua conta.';}
+  catch(e){M.textContent=(e&&/cancel|1001/i.test(String(e.message||e)))?'':'Não deu para entrar com a Apple agora. Tente de novo.';}}
 const accReal=u=>!!(u&&!u.is_anonymous);
 function accUrlInfo(){const s=new URLSearchParams(location.search),h=new URLSearchParams(location.hash.replace(/^#/,''));const g=k=>s.get(k)||h.get(k);return {code:g('error_code'),err:g('error_description')||g('error'),oauth:!!(s.get('code')||h.get('access_token'))};}
 async function accRefresh(){try{const c=await rkClient();const {data:{session}}=await c.auth.getSession();ACC.user=session?session.user:null;accUI();
     if(accReal(ACC.user)){await accSync();RK.busy=null;rkBoot().catch(()=>{});}}catch(e){console.warn('conta',e);}}
 function accUI(){const u=ACC.user,real=accReal(u);if(!$('#acctS'))return;
-  $('#acctS').innerHTML=real?'Conectado como <b>'+esc(u.email||'conta Google')+'</b>. Seu progresso fica salvo na nuvem e vai junto para qualquer aparelho.':'Seu progresso está salvo só neste aparelho. Entre com o Google para não perder nada se trocar de celular.';
-  $('#acctG').hidden=real;$('#acctOut').hidden=!real;$('#acctDel').hidden=!u;}
+  $('#acctS').innerHTML=real?'Conectado como <b>'+esc(u.email||'conta Google')+'</b>. Seu progresso fica salvo na nuvem e vai junto para qualquer aparelho.':'Seu progresso está salvo só neste aparelho. Entre com '+(IS_APP?'a Apple':'o Google')+' para não perder nada se trocar de celular.';
+  $('#acctG').hidden=real||IS_APP;$('#acctA').hidden=real||!IS_APP;$('#acctOut').hidden=!real;$('#acctDel').hidden=!u;}
 async function accGoogle(){const M=$('#acctM');M.textContent='Abrindo o Google…';try{await rkBoot().catch(()=>{});const c=await rkClient();const redirectTo=location.origin+location.pathname;
     const {data:{session}}=await c.auth.getSession();
     if(session&&session.user&&session.user.is_anonymous){const r=await c.auth.linkIdentity({provider:'google',options:{redirectTo}});if(!r.error)return;}
@@ -2960,8 +2972,8 @@ async function accOut(){const c=await rkClient();await c.auth.signOut().catch(()
 async function accDel(){if(!confirm('Apagar sua conta? Isso apaga seu lugar no placar, sua lista de amigos e o progresso salvo na nuvem. O progresso deste aparelho também será zerado.'))return;
   const M=$('#acctM');M.textContent='Apagando…';try{const c=await rkClient();const r=await c.rpc('pb_delete_me');if(r.error)throw r.error;await c.auth.signOut().catch(()=>{});try{localStorage.removeItem(SAVE_KEY);}catch(e){}M.textContent='Conta apagada.';setTimeout(()=>location.replace(location.pathname),900);}
   catch(e){M.textContent='Não deu para apagar agora. Tente de novo.';}}
-{$('#acctG').onclick=accGoogle;$('#acctOut').onclick=accOut;$('#acctDel').onclick=accDel;}
-function accBoot(){const u=accUrlInfo();
+{$('#acctG').onclick=accGoogle;$('#acctA').onclick=accApple;$('#acctOut').onclick=accOut;$('#acctDel').onclick=accDel;}
+function accBoot(){accUI();const u=accUrlInfo();
   if(u.code==='identity_already_exists'){try{history.replaceState(null,'',location.pathname);}catch(e){}showPanel('profile');$('#acctM').textContent='Essa conta Google já tem progresso salvo. Entrando nela…';
     rkClient().then(c=>c.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}}));return;}
   if(u.err){showPanel('profile');$('#acctM').textContent='O login não foi concluído. Tente de novo.';try{history.replaceState(null,'',location.pathname);}catch(e){}}
