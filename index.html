@@ -2770,7 +2770,7 @@ function loadSupa(){return new Promise((res,rej)=>{if(window.supabase&&window.su
 const NET_EVS=['hi','start','st','bs','mk','end','bye','lobby','gr','join','gone'];
 async function openChannel(code){const H={};const on=(ev,fn)=>{H[ev]=fn;};
   if(Q.has('localnet')){const bc=new BroadcastChannel('pb-'+code);bc.onmessage=m=>{const d=m.data;if(H[d.ev])H[d.ev](d.p);};return {on,send:(ev,p)=>bc.postMessage({ev,p}),close:()=>bc.close(),ready:Promise.resolve()};}
-  const sb=await loadSupa();if(!NET.client)NET.client=sb.createClient(SUPA.url,SUPA.key,{realtime:{params:{eventsPerSecond:40}}});
+  const sb=await loadSupa();if(!NET.client)NET.client=sb.createClient(SUPA.url,SUPA.key,{realtime:{params:{eventsPerSecond:40}},global:{fetch:(u,o)=>fetch(u,Object.assign({},o,{cache:'no-store'}))}});
   const ch=NET.client.channel('pb-'+code,{config:{broadcast:{self:false,ack:false}}});
   NET_EVS.forEach(ev=>ch.on('broadcast',{event:ev},m=>{if(H[ev])H[ev](m.payload);}));
   const ready=new Promise((res,rej)=>{const to=setTimeout(()=>rej(new Error('Tempo esgotado')),12000);ch.subscribe(s=>{if(s==='SUBSCRIBED'){clearTimeout(to);res();}else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'){clearTimeout(to);rej(new Error(s));}});});
@@ -2905,7 +2905,7 @@ const RK_BAD=['porra','caralh','buceta','puta','merda','fdp','viad','piroc','arr
 function rkName(n){n=String(n||'').trim();const s=n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z]/g,'');return (!n||RK_BAD.some(b=>s.includes(b.normalize('NFD').replace(/[̀-ͯ]/g,''))))?'Jogador':n;}
 function rkWeek(){const d=new Date(Date.now()-3*3600e3);const t=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));const dn=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dn+3);
   const y=t.getUTCFullYear();const f=new Date(Date.UTC(y,0,4));const w=1+Math.round(((t-f)/864e5-3+((f.getUTCDay()+6)%7))/7);return y+'-'+String(w).padStart(2,'0');}
-async function rkClient(){const sb=await loadSupa();if(!NET.client)NET.client=sb.createClient(SUPA.url,SUPA.key,{realtime:{params:{eventsPerSecond:40}}});return NET.client;}
+async function rkClient(){const sb=await loadSupa();if(!NET.client)NET.client=sb.createClient(SUPA.url,SUPA.key,{realtime:{params:{eventsPerSecond:40}},global:{fetch:(u,o)=>fetch(u,Object.assign({},o,{cache:'no-store'}))}});return NET.client;}
 function rkBoot(){if(RK.busy)return RK.busy;RK.busy=(async()=>{const c=await rkClient();let {data:{session}}=await c.auth.getSession();
     if(!session){const r=await c.auth.signInAnonymously();if(r.error)throw r.error;}
     const {data,error}=await c.rpc('pb_join',{p_name:rkName(SV.name)||'Jogador'});if(error)throw error;RK.me=data;RK.ready=true;rkSyncMe();return data;})();
