@@ -170,6 +170,8 @@ input[type=range]{width:100%;accent-color:#d6f25c;margin:2px 0}
 .danger{font-size:12px;color:var(--dim);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;font-family:var(--mono)}
 .danger.arm{color:#ff8a70}
 #fps{position:absolute;left:50%;top:calc(var(--t) + 58px);transform:translateX(-50%);font-size:11px;color:var(--dim)}
+#mapB{left:108px;top:calc(var(--t) + 64px);pointer-events:auto;font:700 11px var(--mono);letter-spacing:.1em;color:var(--ink);padding:7px 11px;cursor:pointer;z-index:40}
+#map{z-index:40}#bigmap{z-index:60}
 #pauseB{left:16px;top:calc(var(--t) + 64px);pointer-events:auto;font:700 11px var(--mono);letter-spacing:.1em;color:var(--ink);padding:7px 11px;cursor:pointer}
 @media (max-width:900px){
   .mm-left>*,.mm>*{flex-shrink:0}
@@ -235,6 +237,7 @@ input[type=range]{width:100%;accent-color:#d6f25c;margin:2px 0}
   :root{--t:calc(env(safe-area-inset-top,0px) + 10px);--sr:env(safe-area-inset-right,0px);--sl:env(safe-area-inset-left,0px)}
   :root.framed{--t:calc(env(safe-area-inset-top,0px) + 72px)}
   #pauseB{left:calc(12px + var(--sl));top:var(--t);padding:6px 10px;font-size:10px}
+  #mapB{left:calc(96px + var(--sl));top:var(--t);padding:6px 10px;font-size:10px}
   .street{left:calc(94px + var(--sl));top:var(--t);padding:5px 10px;max-width:28vw;border-radius:10px}
   .street span{display:none} .street b{font-size:12px}
   .score{top:var(--t);border-radius:8px;opacity:.92} .score .tm{font-size:13px;padding:2px 8px;min-width:20px} .score .clock{font-size:10px;padding:2px 6px}
@@ -375,7 +378,7 @@ body.spect .cross,body.spect .ammo,body.spect .dmgring,body.spect .holo{display:
   <canvas id="map" width="300" height="300"></canvas>
   <div class="feed" id="feed"></div>
   <div id="fps" hidden></div>
-  <button class="pill" id="pauseB" type="button">II Pausa</button>
+  <button class="pill" id="pauseB" type="button">II Pausa</button><button class="pill" id="mapB" type="button" aria-label="Abrir o mapa">Mapa</button>
   <div class="cross" id="cross"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><i class="c"></i><i class="d"></i></div>
   <div class="holo" id="holo"></div>
   <div class="hit" id="hitm"></div>
@@ -1175,8 +1178,20 @@ if(COURT){const C=COURT,L2=C.L2,W2=C.W2,g=new THREE.Group();g.position.set(C.x,0
   [[-(L2-.35),0],[L2-.35,Math.PI]].forEach(([u,ry])=>{const m=new THREE.Mesh(hb,goalM);m.position.set(u,0,0);m.rotation.y=ry;m.castShadow=true;g.add(m);});
   // bancos de concreto por dentro do alambrado
   const bm=mergeVC([[new THREE.BoxGeometry(5,.45,.5),0xc9c3b6,MT(0,.225,0)]]);[[-5.5],[5.5]].forEach(([u])=>{const m=new THREE.Mesh(bm,goalM);m.position.set(u,0,W2-.55);m.castShadow=m.receiveShadow=true;g.add(m);const [wx,wz]=C.W(u,W2-.55);const o=addOBB(wx,wz,C.a,5,.5,.45,false);o.walk=true;o.prop=1;});
+  // cobertura metálica em arco (quadra coberta)
+  {const Hc=6.6,c=W2+1.7,s=2.6,Rr=(s*s+c*c)/(2*s),al=Math.asin(c/Rr),Lr=2*L2+3.2;
+    const sheet=canvasTex(64,256,(x,w,h)=>{for(let i=0;i<16;i++){x.fillStyle=i%2?'#c9d0d6':'#aeb6be';x.fillRect(0,i*h/16,w,h/16);}});sheet.wrapS=sheet.wrapT=THREE.RepeatWrapping;sheet.repeat.set(Lr/6,1);
+    const rg=new THREE.CylinderGeometry(Rr,Rr,Lr,28,1,true,Math.PI/2-al,2*al);rg.rotateZ(Math.PI/2);
+    const roofM=new THREE.MeshLambertMaterial({map:sheet,side:THREE.DoubleSide,emissive:0x2c3036});const roofMesh=new THREE.Mesh(rg,roofM);roofMesh.position.y=Hc+s-Rr;roofMesh.castShadow=true;roofMesh.receiveShadow=true;g.add(roofMesh);
+    const steel=new THREE.MeshLambertMaterial({color:0x2f5f93});const colG=new THREE.BoxGeometry(.32,Hc,.32);colG.translate(0,Hc/2,0);
+    const nb=Math.max(3,Math.round(Lr/5.5));for(let k=0;k<=nb;k++){const u=-Lr/2+.3+k*(Lr-.6)/nb;
+      [-1,1].forEach(sv=>{const m=new THREE.Mesh(colG,steel);m.position.set(u,0,sv*(c-.15));m.castShadow=true;g.add(m);const [wx,wz]=C.W(u,sv*(c-.15));CYL.push({x:wx,z:wz,r:.22,h:Hc,los:true});});
+      const bg=new THREE.CylinderGeometry(Rr-.06,Rr-.06,.22,28,1,true,Math.PI/2-al,2*al);bg.rotateZ(Math.PI/2);const b=new THREE.Mesh(bg,steel);b.position.set(u,Hc+s-Rr,0);g.add(b);
+      const tie=new THREE.Mesh(new THREE.BoxGeometry(.12,.12,2*c),steel);tie.position.set(u,Hc-.1,0);g.add(tie);}
+    // calhas nas beiradas
+    [-1,1].forEach(sv=>{const gu=new THREE.Mesh(new THREE.BoxGeometry(Lr,.18,.25),steel);gu.position.set(0,Hc+.02,sv*c);g.add(gu);});}
   // refletores nos cantos (acendem à noite)
-  [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([su,sv])=>{const [x,z]=C.W(su*(L2+.9),sv*(W2+.9));const dx=C.x-x,dz=C.z-z,l=Math.hypot(dx,dz);COURT_LAMPS.push({x,z,a:Math.atan2(dz/l,-dx/l)});});}
+  [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([su,sv])=>{const [x,z]=C.W(su*(L2+2.9),sv*(W2+2.9));const dx=C.x-x,dz=C.z-z,l=Math.hypot(dx,dz);COURT_LAMPS.push({x,z,a:Math.atan2(dz/l,-dx/l)});});}
 
 /* ================= ESTÁDIO DO BALNEÁRIO (muro, portões, arquibancada, campo, refletores) ================= */
 const STAD=(()=>{const st=areas.find(a=>a.k==='stadium'),pc=areas.find(a=>a.k==='pitch-soccer');if(!st||!pc||!inFull((st.pts[0][0]+st.pts[4][0])/2,(st.pts[0][1]+st.pts[4][1])/2,20))return null;
@@ -1640,11 +1655,22 @@ function bunkers(base,colHex){const g=new THREE.Group();const mat=new THREE.Mesh
     else if(i%3===1){m=new THREE.Mesh(new THREE.ConeGeometry(1.1,2.4,16),mat2);m.position.set(x,1.2,z);CYL.push({x,z,r:.9,h:2.4,los:true});}
     else{m=new THREE.Mesh(new THREE.BoxGeometry(3,1.3,1),mat);m.position.set(x,.65,z);const a=R()*3;m.rotation.y=-a;addOBB(x,z,a,3,1,1.3,false);}
     m.castShadow=m.receiveShadow=true;g.add(m);});
-  const flag=new THREE.Mesh(new THREE.BoxGeometry(.12,7,.12),new THREE.MeshLambertMaterial({color:0xdddddd}));flag.position.set(base.x,3.5,base.z);g.add(flag);
-  const cloth=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.6),new THREE.MeshLambertMaterial({color:colHex,side:THREE.DoubleSide}));cloth.position.set(base.x+1.35,6.1,base.z);g.add(cloth);g.userData.cloth=cloth;
+  const FH=inCourt(base.x,base.z,3)?5.2:7;const flag=new THREE.Mesh(new THREE.BoxGeometry(.12,FH,.12),new THREE.MeshLambertMaterial({color:0xdddddd}));flag.position.set(base.x,FH/2,base.z);g.add(flag);
+  const cloth=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.6),new THREE.MeshLambertMaterial({color:colHex,side:THREE.DoubleSide}));cloth.position.set(base.x+1.35,FH-.9,base.z);g.add(cloth);g.userData.cloth=cloth;
   g.userData.parts=[flag,cloth];g.userData.mat=mat;scene.add(g);return g;}
 {let best=null;for(let r=0;r<30&&!best;r+=1.5)for(let a=0;a<6.28&&!best;a+=.5){const x=LOC.ctfSeek.x+Math.cos(a)*r,z=LOC.ctfSeek.z+Math.sin(a)*r;if(freeAt(x,z,3.2))best={x,z};}if(best)BASES.ctf.O=best;}
 const flagA=bunkers(BASE.A,teamHex('A')),flagO=bunkers(BASE.O,teamHex('O')),flagO2=bunkers(BASES.full.O,teamHex('O')),flagO3=bunkers(BASES.ctf.O,teamHex('O'));
+
+// placa "SARGENTO VILELA" na casa da rua da quadra (em frente à quadra do Balneário)
+if(LOC.name&&/Balne/.test(LOC.name)){let tb=null,bd=1e9;buildings.forEach(b=>{const d=Math.hypot(b.x+99,b.z+87);if(d<bd){bd=d;tb=b;}});
+  if(tb&&bd<5){const ca=Math.cos(tb.ang),sa=Math.sin(tb.ang);const faces=[[ca,sa,tb.w/2,tb.d],[-ca,-sa,tb.w/2,tb.d],[-sa,ca,tb.d/2,tb.w],[sa,-ca,tb.d/2,tb.w]];
+    let F=null,fd=1e9;faces.forEach(f=>{const px=tb.x+f[0]*(f[2]+2.5),pz=tb.z+f[1]*(f[2]+2.5);const d=distRoad(px,pz);if(d<fd){fd=d;F=f;}});
+    const [nx,nz,half,flen]=F;const tex=canvasTex(1024,200,(x,w,h)=>{const gr=x.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#1d4f91');gr.addColorStop(1,'#143a6d');x.fillStyle=gr;x.fillRect(0,0,w,h);
+      x.strokeStyle='#f2c230';x.lineWidth=10;x.strokeRect(8,8,w-16,h-16);x.fillStyle='#ffffff';x.font='900 104px "Bricolage Grotesque",Arial Black,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('SARGENTO VILELA',w/2,h/2+6);});
+    tex.anisotropy=8;const sw=Math.min(5.2,flen*.8),sh=sw*200/1024;const sgn=new THREE.Mesh(new THREE.PlaneGeometry(sw,sh),new THREE.MeshLambertMaterial({map:tex}));
+    const yy=Math.min(tb.H||3.2,3.4)-sh/2-.25;sgn.position.set(tb.x+nx*(half+.09),yy,tb.z+nz*(half+.09));sgn.rotation.y=Math.atan2(nx,nz);scene.add(sgn);
+    const back=new THREE.Mesh(new THREE.BoxGeometry(sw+.12,sh+.12,.08),new THREE.MeshLambertMaterial({color:0x0e2748}));back.position.set(tb.x+nx*(half+.04),yy,tb.z+nz*(half+.04));back.rotation.y=sgn.rotation.y;scene.add(back);
+    pois.push({n:'Sargento Vilela',k:'shop',x:tb.x,z:tb.z});}}
 
 // escadas para subir nas lajes
 const LADDERS=[];
@@ -2156,7 +2182,7 @@ const TUT={on:false,i:0,t:0,mv:0,shots:0,last:null,
     {k:'reload',pc:'Aperte <b>R</b> para recarregar.',mob:'Toque em <b>RECAR.</b> para recarregar.'},
     {k:'gren',pc:'Aperte <b>G</b> para jogar uma <b>granada de tinta</b> (2 por vida). Ótima para quem está escondido atrás de muro.',mob:'Toque em <b>GRANADA</b> para jogar uma granada de tinta (2 por vida).'},
     {k:'mark',pc:'Agora marque um adversário: acerte uma bolinha nele!',mob:'Agora marque um adversário: acerte uma bolinha nele!'}],
-  start(){if(SV.tut||NET.on){this.on=false;$('#tut').hidden=true;return;}this.on=true;this.i=0;this.t=0;this.mv=0;this.look=0;this.last=null;this.show();},
+  start(){if(!SV.tutWant||NET.on){this.on=false;$('#tut').hidden=true;return;}this.on=true;this.i=0;this.t=0;this.mv=0;this.look=0;this.last=null;this.show();},
   show(){const s=this.steps[this.i];const el=$('#tut');if(!s){this.done();return;}el.hidden=false;$('#tutT').innerHTML=s[isTouch?'mob':'pc'];$('#tutN').textContent=(this.i+1)+'/'+this.steps.length;el.classList.remove('ok');},
   ev(k){if(!this.on)return;const s=this.steps[this.i];if(!s||s.k!==k)return;const el=$('#tut');el.classList.add('ok');sound('ding');this.i++;this.t=-.9;setTimeout(()=>{if(this.on)this.show();},700);},
   tick(dt){if(!this.on||G.mode!=='play'||!player.alive)return;this.t+=dt;const s=this.steps[this.i];if(!s||this.t<0)return;const p=player;
@@ -2165,8 +2191,8 @@ const TUT={on:false,i:0,t:0,mv:0,shots:0,last:null,
     else if(s.k==='ads'){if(p.ads>.8||this.t>9)this.ev('ads');}
     else if(s.k==='reload'){if(p.reload>0||this.t>12)this.ev('reload');}
     else if(s.k==='gren'){if(this.t>14)this.ev('gren');}},
-  done(){this.on=false;SV.tut=1;save();const el=$('#tut');$('#tutT').innerHTML='Pronto! Agora é com você. Boa partida!';$('#tutN').textContent='';el.classList.add('ok');setTimeout(()=>{el.hidden=true;},2600);},
-  skip(){this.on=false;SV.tut=1;save();$('#tut').hidden=true;}};
+  done(){this.on=false;SV.tut=1;SV.tutWant=0;save();const el=$('#tut');$('#tutT').innerHTML='Pronto! Agora é com você. Boa partida!';$('#tutN').textContent='';el.classList.add('ok');setTimeout(()=>{el.hidden=true;},2600);},
+  skip(){this.on=false;SV.tut=1;SV.tutWant=0;save();$('#tut').hidden=true;}};
 
 /* ================= CAPTURA DA BANDEIRA ================= */
 const FL={};
@@ -2305,7 +2331,7 @@ function pauseGame(){if(G.mode!=='play')return;clearInput();rmb=false;if(!(NET.o
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cv;if(!locked)clearInput();if(!locked&&G.mode==='play'&&!noLock)pauseGame();});
 addEventListener('keydown',e=>{if(e.code==='Escape'&&G.mode==='play'&&(noLock||isTouch))pauseGame();else if(e.code==='KeyP'&&G.mode==='play')pauseGame();});
 $('#resume').onclick=()=>{$('#pause').hidden=true;if(G.mode==='pause')G.mode='play';if(!isTouch)tryLock();};
-$('#pauseB').onclick=()=>pauseGame();
+$('#pauseB').onclick=()=>pauseGame();$('#mapB').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();toggleBig();});
 // touch
 function sensK(){const a=player.ads||0;return SV.set.sens*(1+(SV.set.sensAds-1)*a);}
 function vib(p){if(!isTouch||!SV.set.vib||!navigator.vibrate)return;try{navigator.vibrate(p);}catch(e){}}
@@ -2324,7 +2350,7 @@ function lookBy(dx,dy){const k=.006*sensK();player.yaw-=dx*k;player.pitch=clamp(
  $('#relB').addEventListener('pointerdown',e=>{e.preventDefault();startReload(player);});
  $('#grB').addEventListener('pointerdown',e=>{e.preventDefault();throwGren(player);});
  $('#tutX').onclick=()=>TUT.skip();
- $('#tutAgain').onclick=()=>{SV.tut=0;save();$('#tutAgain').textContent='O tutorial aparece na próxima partida';};
+ $('#tutAgain').onclick=()=>{SV.tut=0;SV.tutWant=1;save();$('#tutAgain').textContent='O tutorial aparece na próxima partida';};
  $('#adsB').addEventListener('pointerdown',e=>{e.preventDefault();T.ads=!T.ads;$('#adsB').classList.toggle('on',T.ads);});
  $('#crB').addEventListener('pointerdown',e=>{e.preventDefault();T.crouch=!T.crouch;$('#crB').classList.toggle('on',T.crouch);});}
 /* ---- layout editável dos controles ---- */
